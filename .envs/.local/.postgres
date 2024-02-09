@@ -1,0 +1,7 @@
+# PostgreSQL
+# ------------------------------------------------------------------------------
+POSTGRES_HOST=postgres
+POSTGRES_PORT=5432
+POSTGRES_DB=mikrotik_isp_management
+POSTGRES_USER=RmYqrcRjLtuCvdwGtthyZeMdOksGveSG
+POSTGRES_PASSWORD=rwnsdhqz4fCITuwnUVRicBnVdp4c0qzK4gRjE7lDxxcoNituuqo9KGJQBcZRxE2k

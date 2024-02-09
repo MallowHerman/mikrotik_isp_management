@@ -1,0 +1,93 @@
+version: '3'
+
+volumes:
+  mikrotik_isp_management_local_postgres_data: {}
+  mikrotik_isp_management_local_postgres_data_backups: {}
+
+services:
+  django: &django
+    build:
+      context: .
+      dockerfile: ./compose/local/django/Dockerfile
+    image: mikrotik_isp_management_local_django
+    container_name: mikrotik_isp_management_local_django
+    depends_on:
+      - postgres
+      - redis
+      - mailpit
+    volumes:
+      - .:/app:z
+    env_file:
+      - ./.envs/.local/.django
+      - ./.envs/.local/.postgres
+    ports:
+      - '8000:8000'
+    command: /start
+
+  postgres:
+    build:
+      context: .
+      dockerfile: ./compose/production/postgres/Dockerfile
+    image: mikrotik_isp_management_production_postgres
+    container_name: mikrotik_isp_management_local_postgres
+    volumes:
+      - mikrotik_isp_management_local_postgres_data:/var/lib/postgresql/data
+      - mikrotik_isp_management_local_postgres_data_backups:/backups
+    env_file:
+      - ./.envs/.local/.postgres
+
+  docs:
+    image: mikrotik_isp_management_local_docs
+    container_name: mikrotik_isp_management_local_docs
+    build:
+      context: .
+      dockerfile: ./compose/local/docs/Dockerfile
+    env_file:
+      - ./.envs/.local/.django
+    volumes:
+      - ./docs:/docs:z
+      - ./config:/app/config:z
+      - ./mikrotik_isp_management:/app/mikrotik_isp_management:z
+    ports:
+      - '9000:9000'
+    command: /start-docs
+
+  mailpit:
+    image: docker.io/axllent/mailpit:latest
+    container_name: mikrotik_isp_management_local_mailpit
+    ports:
+      - "8025:8025"
+
+  redis:
+    image: docker.io/redis:6
+    container_name: mikrotik_isp_management_local_redis
+
+  celeryworker:
+    <<: *django
+    image: mikrotik_isp_management_local_celeryworker
+    container_name: mikrotik_isp_management_local_celeryworker
+    depends_on:
+      - redis
+      - postgres
+      - mailpit
+    ports: []
+    command: /start-celeryworker
+
+  celerybeat:
+    <<: *django
+    image: mikrotik_isp_management_local_celerybeat
+    container_name: mikrotik_isp_management_local_celerybeat
+    depends_on:
+      - redis
+      - postgres
+      - mailpit
+    ports: []
+    command: /start-celerybeat
+
+  flower:
+    <<: *django
+    image: mikrotik_isp_management_local_flower
+    container_name: mikrotik_isp_management_local_flower
+    ports:
+      - '5555:5555'
+    command: /start-flower
